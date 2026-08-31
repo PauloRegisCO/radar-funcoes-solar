@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+preview_embed.html
+_testes/
+pipeline/_caminhos.py
