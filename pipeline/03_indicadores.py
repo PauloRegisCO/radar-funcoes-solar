@@ -232,8 +232,11 @@ ind['s_teto'] = sinal(ind.n_meses_teto_baixo >= 3, ind.n_meses_teto_baixo >= 1)
 # limiares comparados com o valor ARREDONDADO como aparece na tela (3 casas = 0,1 pp), para -4,0% não ficar verde
 d25r = ind.delta_vig2025.fillna(0).round(3); vmr = ind.var_max_abs.fillna(0).round(3)
 ind['s_onsxons'] = sinal(d25r <= -0.08, d25r <= -0.04)
-ind['s_forma'] = sinal((ind.n_nao_monotona.fillna(0) >= 5) | (ind.n_saltos.fillna(0) >= 10) | (ind.n_alto_baixa_irr.fillna(0) >= 10),
-                       (ind.n_nao_monotona.fillna(0) >= 1) | (ind.n_saltos.fillna(0) >= 4) | (ind.n_alto_baixa_irr.fillna(0) >= 3))
+# Sinal de forma = só os defeitos que prejudicam o agente (curva que desce com mais sol; saltos entre meias-horas).
+# Saturação precoce e valor alto com pouco sol aumentam a referência (favorecem o agente) ou são físicos
+# (sobredimensionamento, sensor lendo baixo): ficam como informação na página 5, sem acender sinal (decisão de 31/08/2026).
+ind['s_forma'] = sinal((ind.n_nao_monotona.fillna(0) >= 5) | (ind.n_saltos.fillna(0) >= 10),
+                       (ind.n_nao_monotona.fillna(0) >= 1) | (ind.n_saltos.fillna(0) >= 4))
 ind['s_versoes'] = np.where((ind.regime == 'mensal') & ind.var_max_abs.notna(), sinal(vmr >= 0.15, vmr >= 0.08), 0)
 ind['s_telemetria'] = sinal(ind.pct_irr_ruim.fillna(0) >= 0.30, ind.pct_irr_ruim.fillna(0) >= 0.15)
 vr = ind.vies_art4_vs_est_ons.fillna(0).round(3)
