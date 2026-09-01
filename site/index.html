@@ -250,7 +250,7 @@ function renderP7(d,u){const T=d.tele;let s='';if(T.length){const n=T.length,w=M
   [0,400,800,1200].forEach(i=>c+='<text x="'+(cx(i)-10)+'" y="'+(ch-8)+'">'+i+'</text>');
   if(N.length){let band='';N.forEach(x=>{band+='M'+cx(x[0])+','+cy(x[2])+'L'+cx(x[0]+50)+','+cy(x[2])+'L'+cx(x[0]+50)+','+cy(x[4])+'L'+cx(x[0])+','+cy(x[4])+'Z ';});c+='<path d="'+band+'" fill="var(--irr)" opacity=".18"/>';N.forEach(x=>{c+='<circle cx="'+cx(x[0]+25)+'" cy="'+cy(x[3])+'" r="2.5" fill="var(--irr)"/>';});let e='',f=true;N.forEach(x=>{if(x[5]==null){f=true;return;}e+=(f?'M':'L')+cx(x[0]+25)+','+cy(x[5]);f=false;});c+='<path d="'+e+'" fill="none" stroke="var(--irr)" stroke-width="2" stroke-dasharray="5 3"/>';}
   const A=((d.curvas.art4_final||{})[mes]||{})['12:00'];if(A){let dd='',f=true;A.forEach((v,i)=>{if(v==null){f=true;return;}dd+=(f?'M':'L')+cx(d.curva_irr[i])+','+cy(v);f=false;});c+='<path d="'+dd+'" fill="none" stroke="var(--sol)" stroke-width="3"/>';}
-  $('cloud').innerHTML=N.length||A?c:'<text x="120" y="100">sem nuvem pública neste mês</text>';}
+  $('cloud').innerHTML=N.length||A?c:'<text x="120" y="100">sem irradiância pública válida neste mês (telemetria inválida ou congelada, ou usina fora do dado aberto)</text>';}
 async function onUsina(){const ceg=$('selUsina').value;const u=IDX.usinas.find(x=>x.ceg===ceg);
   if(!u){cur=null;renderP1();const av=$('aviso');av.hidden=false;av.textContent='Nenhuma usina atende a esta combinação de conjunto e regime. Mude um dos filtros.';document.querySelectorAll('.page:not(#p1):not(#p8)').forEach(p=>p.style.opacity='.35');return;}
   cur=u;renderP1();let d=null;try{d=await loadUsina(ceg);}catch(e){d=null;}

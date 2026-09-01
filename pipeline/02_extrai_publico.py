@@ -89,6 +89,7 @@ SELECT ceg7, mes, cast(floor(irr / 50) * 50 AS INTEGER) AS irr_bin,
        quantile_cont(ger_ver, 0.1) AS ger_p10, quantile_cont(ger_ver, 0.5) AS ger_p50, quantile_cont(ger_ver, 0.9) AS ger_p90,
        quantile_cont(ger_est, 0.5) AS est_p50, max(ger_ver) AS ger_max
 FROM b WHERE NOT irr_invalida AND irr >= 0 AND irr <= 1400
+      AND NOT (irr > 50 AND irr = irr_ant)  -- descarta leitura congelada (sensor travado marca sol de madrugada)
 GROUP BY ceg7, mes, irr_bin""")
 
 salva('publico_celula.parquet', f"""
