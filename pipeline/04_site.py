@@ -22,6 +22,10 @@ enp = pd.read_parquet(os.path.join(D, 'energia_pareada.parquet'))
 ver = pd.read_parquet(os.path.join(D, 'versoes.parquet'))
 cur = pd.read_parquet(os.path.join(D, 'curvas100.parquet'))
 tele = pd.read_parquet(os.path.join(D, 'telemetria_mes.parquet'))
+try:
+    risco = pd.read_parquet(os.path.join(D, 'celulas_risco_mes.parquet'))
+except Exception:
+    risco = pd.DataFrame(columns=['ceg', 'ano_mes', 'cel', 'vazias', 'frageis'])
 nuv = pd.read_parquet(os.path.join(D, 'publico_nuvem.parquet')).rename(columns={'ceg7': 'ceg'})
 vies = pd.read_parquet(os.path.join(D, 'vies_publico.parquet'))
 
@@ -142,6 +146,9 @@ for ceg, g in cs.groupby('ceg'):
     # telemetria mensal
     tm = tele[tele.ceg == ceg].sort_values('ano_mes')
     out['tele'] = [[int(t.ano_mes), r(t.pct_ruim, 4), r(t.mwh_corte, 0)] for t in tm.itertuples()]
+    # células em risco (mês x meia-hora do fotoperíodo sem ponto válido / com menos de 5)
+    rk = risco[risco.ceg == ceg].sort_values('ano_mes')
+    out['risco'] = [[int(t.ano_mes), int(t.cel), int(t.vazias), int(t.frageis)] for t in rk.itertuples()]
     # nuvem pública (mês x irr_bin)
     nv = nuv[nuv.ceg == ceg]
     out['nuvem'] = {int(m): [[int(t.irr_bin), int(t.n), r(t.ger_p10), r(t.ger_p50), r(t.ger_p90), r(t.est_p50)] for t in gm.sort_values('irr_bin').itertuples()] for m, gm in nv.groupby('mes')}
