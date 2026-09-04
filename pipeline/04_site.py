@@ -22,6 +22,28 @@ enp = pd.read_parquet(os.path.join(D, 'energia_pareada.parquet'))
 ver = pd.read_parquet(os.path.join(D, 'versoes.parquet'))
 cur = pd.read_parquet(os.path.join(D, 'curvas100.parquet'))
 tele = pd.read_parquet(os.path.join(D, 'telemetria_mes.parquet'))
+# status mensal das funções vigentes (fração de células preenchidas por mês, versão mais recente de cada ano)
+try:
+    _cel = pd.read_parquet(os.path.join(D, 'celulas.parquet'), columns=['lote', 'zip_mes', 'revisada', 'ceg', 'mes', 'vazia'])
+    _cel = _cel[_cel.lote == 'vigente']
+    _cel['ano'] = _cel.zip_mes.astype(str).str[:4].astype(int) + 1
+    _cel.loc[_cel.zip_mes.astype(str).str[4:6] != '12', 'ano'] = _cel.zip_mes.astype(str).str[:4].astype(int)
+    _ult = _cel.groupby(['ceg', 'ano']).zip_mes.transform('max'); _cel = _cel[_cel.zip_mes == _ult]
+    _rev = _cel.groupby(['ceg', 'ano']).revisada.transform('max'); _cel = _cel[_cel.revisada == _rev]
+    status_fn = _cel.groupby(['ceg', 'ano', 'mes']).vazia.apply(lambda v: float(1 - v.mean())).reset_index(name='cheia')
+except Exception as e:
+    print('status_fn indisponível:', e); status_fn = pd.DataFrame(columns=['ceg', 'ano', 'mes', 'cheia'])
+# status mensal das funções vigentes (fração de células preenchidas por mês, versão mais recente de cada ano)
+try:
+    _cel = pd.read_parquet(os.path.join(D, 'celulas.parquet'), columns=['lote', 'zip_mes', 'revisada', 'ceg', 'mes', 'vazia'])
+    _cel = _cel[_cel.lote == 'vigente']
+    _cel['ano'] = _cel.zip_mes.astype(str).str[:4].astype(int) + 1
+    _cel.loc[_cel.zip_mes.astype(str).str[4:6] != '12', 'ano'] = _cel.zip_mes.astype(str).str[:4].astype(int)
+    _ult = _cel.groupby(['ceg', 'ano']).zip_mes.transform('max'); _cel = _cel[_cel.zip_mes == _ult]
+    _rev = _cel.groupby(['ceg', 'ano']).revisada.transform('max'); _cel = _cel[_cel.revisada == _rev]
+    status_fn = _cel.groupby(['ceg', 'ano', 'mes']).vazia.apply(lambda v: float(1 - v.mean())).reset_index(name='cheia')
+except Exception as e:
+    print('status_fn indisponível:', e); status_fn = pd.DataFrame(columns=['ceg', 'ano', 'mes', 'cheia'])
 try:
     risco = pd.read_parquet(os.path.join(D, 'celulas_risco_mes.parquet'))
 except Exception:
@@ -149,6 +171,12 @@ for ceg, g in cs.groupby('ceg'):
     # células em risco (mês x meia-hora do fotoperíodo sem ponto válido / com menos de 5)
     rk = risco[risco.ceg == ceg].sort_values('ano_mes')
     out['risco'] = [[int(t.ano_mes), int(t.cel), int(t.vazias), int(t.frageis)] for t in rk.itertuples()]
+    # status mensal da função vigente de cada ano (12 valores, fração de células preenchidas; null = sem função)
+    sf = status_fn[status_fn.ceg == ceg]
+    out['status_funcao'] = {str(int(an)): [r(float(x.cheia.iloc[0]), 3) if len(x := sf[(sf.ano == an) & (sf.mes == m)]) else None for m in range(1, 13)] for an in sorted(sf.ano.unique())}
+    # status mensal da função vigente de cada ano (12 valores, fração de células preenchidas; null = sem função)
+    sf = status_fn[status_fn.ceg == ceg]
+    out['status_funcao'] = {str(int(an)): [r(float(x.cheia.iloc[0]), 3) if len(x := sf[(sf.ano == an) & (sf.mes == m)]) else None for m in range(1, 13)] for an in sorted(sf.ano.unique())}
     # nuvem pública (mês x irr_bin)
     nv = nuv[nuv.ceg == ceg]
     out['nuvem'] = {int(m): [[int(t.irr_bin), int(t.n), r(t.ger_p10), r(t.ger_p50), r(t.ger_p90), r(t.est_p50)] for t in gm.sort_values('irr_bin').itertuples()] for m, gm in nv.groupby('mes')}
